@@ -13,7 +13,8 @@
 
 static int usbasp_libusb_init(void *state, libusb_context **ctx)
 {
-	*ctx = not_null();
+	if (ctx)
+		*ctx = not_null();
 	return 0;
 }
 

@@ -176,10 +176,12 @@ static int usbasp_spi_shutdown(void *data)
 			unsigned char dummy[4] = { 0 };
 			usbasp_control(usbasp_data->handle, USBASP_FUNC_DISCONNECT, 0, 0, dummy, sizeof(dummy));
 			libusb_release_interface(usbasp_data->handle, 0);
+			libusb_attach_kernel_driver(usbasp_data->handle, 0);
 			libusb_close(usbasp_data->handle);
 		}
 		free(usbasp_data);
 	}
+	libusb_exit(NULL);
 	return 0;
 }
 
