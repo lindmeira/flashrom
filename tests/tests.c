@@ -594,6 +594,7 @@ int main(int argc, char *argv[])
 		cmocka_unit_test(ch347_spi_probe_lifecycle_test_success),
 		cmocka_unit_test(ch347_spi_fault_wrapped_basic_test_success),
 		cmocka_unit_test(ch347_spi_fault_wrapped_probe_test_success),
+		cmocka_unit_test(usbasp_basic_lifecycle_test_success),
 		cmocka_unit_test(spidriver_probe_lifecycle_test_success),
 		cmocka_unit_test(nv_sma_spi_basic_lifecycle_test_success),
 		cmocka_unit_test(fault_basic_lifecycle_test_success),

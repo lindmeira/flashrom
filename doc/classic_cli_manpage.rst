@@ -363,6 +363,7 @@ All operations involving any chip access (probe/read/write/...) require the ``-p
         * ``dirtyjtag_spi``       (for SPI flash ROMs attached to DirtyJTAG-compatible devices)
         * ``asm106x``             (for SPI flash ROMs attached to asm106x PCI SATA controllers)
         * ``spidriver``           (for SPI flash ROMs attached to an Excamera Labs SPIDriver)
+        * ``usbasp``              (for SPI flash ROMs attached to Thomas Fischl USBasp and clones)
         * ``nv_sma_spi``          (for SPI flash ROMs attached to an Nvidia System Management Agent)
 
         Some programmers have optional or mandatory parameters which are described in detail in the
@@ -1527,6 +1528,18 @@ to set target frequency at 15MHz.::
 
         flashrom -p nv_sma_spi:spispeed=15000000
 
+
+usbasp programmer
+^^^^^^^^^^^^^^^^^
+
+An optional ``spispeed`` parameter can be used to set the SPI clock frequency.
+Syntax is::
+
+        flashrom -p usbasp:spispeed=frequency
+
+where ``frequency`` can be ``auto`` (default), ``1.5M``, ``750k``, ``375k``, ``187.5k``, ``93.75k``, ``32k``, ``16k``, ``8k``, ``4k``, ``2k``, ``1k``, or ``500``.
+
+
 EXAMPLES
 --------
 
@@ -1602,7 +1615,7 @@ REQUIREMENTS
 
         * need access to the respective USB device via libusb API version 1.0
 
-* ch341a_spi, dediprog, nv_sma_spi
+* ch341a_spi, dediprog, nv_sma_spi, usbasp
 
         * need access to the respective USB device via libusb API version 1.0
 
@@ -1615,7 +1628,7 @@ REQUIREMENTS
         * have to be run as superuser/root
         * need raw access permission
 
-* serprog, buspirate_spi, dediprog, usbblaster_spi, ft2232_spi, pickit2_spi, ch341a_spi, digilent_spi, dirtyjtag_spi, spidriver
+* serprog, buspirate_spi, dediprog, usbblaster_spi, ft2232_spi, pickit2_spi, ch341a_spi, digilent_spi, dirtyjtag_spi, spidriver, usbasp
 
         * can be run as normal user on most operating systems if appropriate device permissions are set
 

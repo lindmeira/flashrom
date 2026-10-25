@@ -450,6 +450,13 @@ programmer = {
     'srcs'    : files('programmers/usbblaster_spi.c'),
     'flags'   : [ '-DCONFIG_USBBLASTER_SPI=1' ],
   },
+  'usbasp' : {
+    'deps'    : [ libusb1 ],
+    'groups'  : [ group_usb, group_external ],
+    'srcs'    : files('programmers/usbasp.c'),
+    'test_srcs' : files('tests/usbasp.c'),
+    'flags'   : [ '-DCONFIG_USBASP=1' ],
+  },
 }
 
 active_programmer_count = 0

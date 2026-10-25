@@ -15,7 +15,7 @@ option('programmer', type : 'array', value : ['auto'], choices : [
         'mstarddc_spi', 'nic3com', 'nicintel', 'nicintel_eeprom', 'nicintel_spi',
         'nicrealtek', 'nv_sma_spi', 'ogp_spi', 'parade_lspcon', 'pickit2_spi', 'pony_spi', 'raiden_debug_spi',
         'realtek_mst_i2c_spi', 'serprog', 'spidriver', 'stlinkv3_spi',
-        'usbblaster_spi',
+        'usbblaster_spi', 'usbasp',
 ], description: 'Active programmers')
 option('llvm_cov', type : 'feature', value : 'disabled', description : 'build for llvm code coverage')
 option('delay_minimum_sleep_us', type : 'integer', min : 0, value : 100,
