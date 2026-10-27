@@ -112,7 +112,7 @@ static int usbasp_spi_send_command(const struct flashctx *flash,
 	if (total_len == 0)
 		return 0;
 
-	/* Assert Chip Select: drives RESET line LOW */
+	/* Assert Chip Select: pulses RESET line HIGH then LOW while keeping /SS as output */
 	unsigned char dummy[4] = { 0 };
 	if (usbasp_control(data->handle, USBASP_FUNC_CONNECT, 0, 0, dummy, sizeof(dummy)) < 0) {
 		msg_perr("USBasp: Failed to assert CS# (connect)\n");
@@ -126,7 +126,7 @@ static int usbasp_spi_send_command(const struct flashctx *flash,
 		msg_perr("USBasp: Out of memory\n");
 		free(tx_buf);
 		free(rx_buf);
-		usbasp_control(data->handle, USBASP_FUNC_DISCONNECT, 0, 0, dummy, sizeof(dummy));
+		usbasp_control(data->handle, USBASP_FUNC_CONNECT, 0, 0, dummy, sizeof(dummy));
 		return SPI_GENERIC_ERROR;
 	}
 
@@ -153,9 +153,14 @@ static int usbasp_spi_send_command(const struct flashctx *flash,
 		pos += 4;
 	}
 
-	/* De-assert Chip Select: releases RESET line (pulled HIGH by external pull-up) */
-	if (usbasp_control(data->handle, USBASP_FUNC_DISCONNECT, 0, 0, dummy, sizeof(dummy)) < 0) {
-		msg_perr("USBasp: Failed to de-assert CS# (disconnect)\n");
+	/*
+	 * Pulse Chip Select HIGH via USBASP_FUNC_CONNECT instead of USBASP_FUNC_DISCONNECT.
+	 * In USBasp firmware, ispDisconnect() sets PB2 (/SS) as a low input before
+	 * disabling SPCR, which triggers an AVR hardware SPI slave-mode fault and
+	 * latches SPIF=1 in SPSR, corrupting the next SPI transfer.
+	 */
+	if (usbasp_control(data->handle, USBASP_FUNC_CONNECT, 0, 0, dummy, sizeof(dummy)) < 0) {
+		msg_perr("USBasp: Failed to de-assert CS#\n");
 		ret = SPI_GENERIC_ERROR;
 	}
 
@@ -212,6 +217,7 @@ static int usbasp_spi_init(const struct programmer_cfg *cfg)
 	struct usbasp_data *data = calloc(1, sizeof(*data));
 	if (!data) {
 		msg_perr("Out of memory!\n");
+		libusb_exit(NULL);
 		return 1;
 	}
 
@@ -221,12 +227,14 @@ static int usbasp_spi_init(const struct programmer_cfg *cfg)
 	if (data->handle == NULL) {
 		msg_perr("Couldn't open device %04x:%04x.\n", vid, pid);
 		free(data);
+		libusb_exit(NULL);
 		return 1;
 	}
 
 	if (usb_dev_claim_and_describe(data->handle, 0) != 0) {
 		libusb_close(data->handle);
 		free(data);
+		libusb_exit(NULL);
 		return 1;
 	}
 
@@ -253,13 +261,18 @@ static int usbasp_spi_init(const struct programmer_cfg *cfg)
 
 	uint8_t sck_res = 0;
 	ret = usbasp_control(data->handle, USBASP_FUNC_SETISPSCK, sck_index, 0, &sck_res, 1);
-	if (ret < 0 || sck_res != 0) {
+	if (ret != 1 || sck_res != 0) {
 		msg_pwarn("USBasp: Warning: cannot set SCK period. Please check for USBasp firmware update.\n");
 	}
 
-	/* Ensure programmer is in idle/disconnected state initially */
+	/*
+	 * Clear any stale SPIF flag in SPSR left over from a previous disconnect
+	 * by connecting and clocking a dummy 0xFF transfer, then re-pulsing CS#.
+	 */
 	unsigned char dummy[4] = { 0 };
-	usbasp_control(data->handle, USBASP_FUNC_DISCONNECT, 0, 0, dummy, sizeof(dummy));
+	usbasp_control(data->handle, USBASP_FUNC_CONNECT, 0, 0, dummy, sizeof(dummy));
+	usbasp_control(data->handle, USBASP_FUNC_TRANSMIT, 0xffff, 0xffff, dummy, sizeof(dummy));
+	usbasp_control(data->handle, USBASP_FUNC_CONNECT, 0, 0, dummy, sizeof(dummy));
 
 	return register_spi_master(&spi_master_usbasp, data);
 }
